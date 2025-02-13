@@ -130,8 +130,6 @@ def send_register_sms(request):
         # 生成验证码
         sms = utilityfunc.random_string()
         cache.set(f'sms_code_{phone}', sms, timeout=300)
-        temp = cache.get(f'sms_code_{phone}')
-        print(f"temp: {temp}")
 
 
         # 发送验证码
@@ -230,18 +228,99 @@ def logout(request):
     return JsonResponse(data=send_json, status=200)
 
 
+def change_password_send_sms(request):
+    if request.method == 'GET':
+        # 接收前端数据
+        user_id = request.user_id  # 这里需要从token中获取用户id
+
+
+
+        obj_row = UserInfo.objects.filter(id=user_id).first()
+        if not obj_row:
+            send_json = {  
+                'code': 404,    
+                'msg': '用户不存在',  
+                'data': {},   
+            }
+            return JsonResponse(data=send_json, status=404)
+
+        user_phone = obj_row.phone
+
+        # 验证码发送频率限制
+        if cache.get(f'sms_cooldown_change_password_{user_phone}'):
+            send_json = {  
+                'code': 429, 
+                'msg': '发送频率过快',  
+                'data': {},   
+            }
+            return JsonResponse(data=send_json, status=429)
+        
+
+        sms = utilityfunc.random_string()
+        cache.set(f'sms_code_change_password_{user_phone}', sms, timeout=300)
+
+        sendsms.send_sms(user_phone, sms)
+
+        cache.set(f'sms_cooldown_change_password_{user_phone}', True, timeout=60)
+
+        send_json = {  
+            'code': 200, 
+            'msg': '验证码发送成功',  
+            'data': {},   
+            }
+        
+        return JsonResponse(data=send_json, status=200)
+        
 
 
 
 
 
+def change_password(request):
+    if request.method == 'POST':
+        # 接收前端数据
+        try:
+            data = json.loads(request.body)
 
+        except json.JSONDecodeError:
+            send_json = {  
+                'code': 400, 
+                'msg': '数据格式错误',  
+                'data': {},   
+            }
+            return JsonResponse(data=send_json, status=400) 
+ 
+        # 表单信息查验
 
+        user_id = request.user_id  # 这里需要从token中获取用户id
+        obj_row = UserInfo.objects.filter(id=user_id).first()
+        
+        data['phone'] = obj_row.phone
 
+        print(data)
+        modelform = formdetection.UserChangePasswordModelForm(data=data, instance=obj_row)
 
+        if not modelform.is_valid():
+            error_dirt = {field: error[0] for field, error in modelform.errors.items()}
+            send_json = {  
+                'code': 400,
+                'msg': '修改密码失败',
+                'data': error_dirt,
+                }
+            return JsonResponse(data=send_json, status=400)
+        
 
+        instance = modelform.save(commit=False)
+        instance.save(update_fields=['password'])
 
+        data_json = {
+            'code': 200,
+            'msg': '修改密码成功',
+            'data': {},
+            }
+        return JsonResponse(data=data_json, status=200)
 
+        
 
 
 
@@ -277,6 +356,12 @@ def plant_recognition(request):
         pure_base_str = base_str.split(',')[1]
 
         # 调用千问接口进行植物识别
+        send_json = {  
+            'code': 200, 
+            'msg': '植物识别成功',  
+            'data': {}
+        }
+        return JsonResponse(data=send_json, status=200)
 
 
 

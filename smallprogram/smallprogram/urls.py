@@ -21,11 +21,10 @@ from app01 import views
 urlpatterns = [
     path('api/login/', views.login),
     path('api/register/', views.register),
-    path('api/send_sms/', views.send_register_sms),
+    path('api/register/send_sms/', views.send_register_sms),
     path('api/banned_user/',  views.banned_user),
     path('api/funtion/plant_recognition', views.plant_recognition),
-    path('api/logout/', views.logout)
-    
-    
-
+    path('api/logout/', views.logout),
+    path('api/change_password/', views.change_password),
+    path('api/change_password/send_sms/', views.change_password_send_sms),
 ]
