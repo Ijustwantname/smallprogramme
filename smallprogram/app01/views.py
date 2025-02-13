@@ -229,22 +229,34 @@ def logout(request):
 
 
 def change_password_send_sms(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         # 接收前端数据
-        user_id = request.user_id  # 这里需要从token中获取用户id
+        data = json.loads(request.body)
+        user_phone = data.get('phone')
 
-
-
-        obj_row = UserInfo.objects.filter(id=user_id).first()
-        if not obj_row:
+        # 表单信息查验
+        modelform = formdetection.UserSendSmsModelForm(data=data)
+        if not modelform.is_valid():
+            error_dirt = {field: error[0] for field, error in modelform.errors.items()}
             send_json = {  
-                'code': 404,    
-                'msg': '用户不存在',  
+                'code': 422, 
+                'msg': 'json format error',
+                'data': error_dirt,
+            }
+            return JsonResponse(data=send_json, status=422)
+        
+
+        # 是否存在该用户
+        exist = UserInfo.objects.filter(phone=user_phone).exists()
+        if not exist:
+            send_json = {  
+                'code': 404, 
+                'msg': '用户不存在, 请输入正确的手机号',  
                 'data': {},   
             }
             return JsonResponse(data=send_json, status=404)
 
-        user_phone = obj_row.phone
+
 
         # 验证码发送频率限制
         if cache.get(f'sms_cooldown_change_password_{user_phone}'):
@@ -281,6 +293,7 @@ def change_password(request):
         # 接收前端数据
         try:
             data = json.loads(request.body)
+            user_phone = data.get('phone')
 
         except json.JSONDecodeError:
             send_json = {  
@@ -292,12 +305,9 @@ def change_password(request):
  
         # 表单信息查验
 
-        user_id = request.user_id  # 这里需要从token中获取用户id
-        obj_row = UserInfo.objects.filter(id=user_id).first()
-        
-        data['phone'] = obj_row.phone
+        obj_row = UserInfo.objects.filter(phone=user_phone).first()
 
-        print(data)
+
         modelform = formdetection.UserChangePasswordModelForm(data=data, instance=obj_row)
 
         if not modelform.is_valid():

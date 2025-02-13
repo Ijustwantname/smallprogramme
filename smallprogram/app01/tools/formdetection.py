@@ -7,7 +7,6 @@ from django.core.cache import cache
 
 class UserChangePasswordModelForm(forms.ModelForm):
     password_confirm = forms.CharField(label='确认密码')
-    phone = forms.CharField(label='找到验证码')
     send_sms = forms.CharField(label='发送短信验证码')
     class Meta:
         model = UserInfo
@@ -34,6 +33,21 @@ class UserChangePasswordModelForm(forms.ModelForm):
             raise forms.ValidationError('两次输入的密码不一致')
         
         return password_confirm
+    
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+
+        ret: bool = UserInfo.objects.filter(phone=phone).exists()
+        if not ret:
+            raise forms.ValidationError('用户不存在')
+
+        pattern = r'^1[3-9]\d{9}$'
+        if not re.fullmatch(pattern, phone):
+            raise forms.ValidationError('手机号码格式错误')
+        
+        return phone
+
     
     def clean_send_sms(self):
         print(self.cleaned_data)
