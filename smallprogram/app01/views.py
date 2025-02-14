@@ -8,6 +8,7 @@ from app01.tools import tokenjwt
 from app01.tools import utilityfunc
 from django.core.cache import cache
 from app01.sms import sendsms
+from app01.models import Blacklist
 
 
 
@@ -204,7 +205,9 @@ def banned_user(request):
             }
             return JsonResponse(data=send_json, status=401)
 
-
+    
+        Blacklist.objects.create(token=request.token)
+        
 
         UserInfo.objects.filter(id=user_id).delete()
         send_json = {  
@@ -217,6 +220,10 @@ def banned_user(request):
 
 
 def logout(request):
+    token = request.token
+    Blacklist.objects.create(token=token)
+
+
     send_json = {   
         'code': 200, 
         'msg': '退出成功',  

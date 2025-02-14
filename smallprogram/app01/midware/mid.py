@@ -2,6 +2,7 @@ from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
 from app01.tools import tokenjwt
 from app01.models import UserInfo
+from app01.models import Blacklist
 
 
 class JWTAuthMiddleware(MiddlewareMixin):
@@ -33,6 +34,7 @@ class JWTAuthMiddleware(MiddlewareMixin):
             }
             return JsonResponse(data_json, status=401)
         
+
         # 检验用户是否存在
         exist = UserInfo.objects.filter(id=payload.get('user_id')).exists()
         if not exist:
@@ -42,8 +44,19 @@ class JWTAuthMiddleware(MiddlewareMixin):
                 }
             return JsonResponse(data_json, status=401)
         
+        # 验证 token 是否在黑名单中
+        blacklisted = Blacklist.objects.filter(token=token).exists()
+        if  blacklisted:
+            data_json = {
+                'code': 401,
+                'msg': 'Token 已失效, 无法使用'
+            }
+            return JsonResponse(data_json, status=401)
+        
 
         request.user_id = payload.get('user_id')
+        request.token = token
+        
         return None
 
 

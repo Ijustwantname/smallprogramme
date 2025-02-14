@@ -30,6 +30,12 @@ class UserInfo(models.Model):
     }
 """
 
+class Blacklist(models.Model):
+    token = models.CharField(max_length=500, unique=True)  # 存储Token
+    blacklisted_at = models.DateTimeField(auto_now_add=True)  # 添加时间
+
+
+
 
 class ChatSessionMessage(models.Model):
     session_id = models.UUIDField()
