@@ -3,37 +3,23 @@ from django.db import models
 
 # Create your models here.
 
+
+
 class UserInfo(models.Model):
     username = models.CharField(max_length=32)
     phone = models.CharField(max_length=16)
     password = models.CharField(max_length=64)
 
-
-"""
-    {
-        用户名(
-            {
-                类型:
-                数据:
-            }
-            {
-                类型:
-                数据:
-            }
-
-        ai(
-            {
-                类型:
-                数据:
-            }
-        )
-    }
-"""
+class UserImageInfo(models.Model):
+    image_data = models.BinaryField(null=True, blank=True)
+    background = models.BinaryField(null=True, blank=True)
+    user = models.ForeignKey(to='UserInfo', to_field='id',on_delete=models.CASCADE)
+    
+    
 
 class Blacklist(models.Model):
-    token = models.CharField(max_length=500, unique=True)  # 存储Token
+    token = models.CharField(max_length=255, unique=True)  # 存储Token
     blacklisted_at = models.DateTimeField(auto_now_add=True)  # 添加时间
-
 
 
 

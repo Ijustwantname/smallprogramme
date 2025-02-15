@@ -1,4 +1,5 @@
 import json
+import base64
 from django.http import JsonResponse
 from django.shortcuts import render
 from app01.tools import encrypt
@@ -9,6 +10,8 @@ from app01.tools import utilityfunc
 from django.core.cache import cache
 from app01.sms import sendsms
 from app01.models import Blacklist
+from app01.models import UserImageInfo
+
 
 
 
@@ -27,8 +30,6 @@ from app01.models import Blacklist
 '''
 
 
-
-
 def login(request):
     
     if request.method == 'POST':
@@ -41,7 +42,7 @@ def login(request):
             send_json = {  
                 'code': 400, 
                 'msg': 'json格式错误',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=400)
 
@@ -63,7 +64,7 @@ def login(request):
             send_json = {  
                 'code': 404, 
                 'msg': '用户不存在',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=404)
 
@@ -89,7 +90,7 @@ def login(request):
             send_json = {  
                 'code': 401, 
                 'msg': '密码错误',  
-                'data': {},   
+                'data': None,    
             }
             return JsonResponse(data=send_json, status=401)
 
@@ -104,7 +105,7 @@ def send_register_sms(request):
             send_json = {  
                 'code': 400, 
                 'msg': 'json格式错误',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=400)
 
@@ -124,7 +125,7 @@ def send_register_sms(request):
             send_json = {  
                 'code': 429, 
                 'msg': '发送频率过快',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=429)
         
@@ -142,7 +143,7 @@ def send_register_sms(request):
         send_json = {  
             'code': 200, 
             'msg': '验证码发送成功',  
-            'data': {},   
+            'data': None,   
             }
         
         return JsonResponse(data=send_json, status=200)
@@ -158,10 +159,11 @@ def register(request):
             send_json = {  
                 'code': 400, 
                 'msg': '数据格式错误',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=400) 
         
+
         # 表单信息查验
         modelform = formdetection.UserRegisterModelForm(data=data)
 
@@ -175,12 +177,14 @@ def register(request):
             return JsonResponse(data=send_json, status=409)
         
 
-        modelform.save()
+        obj_new = modelform.save()
+        
+        UserImageInfo.objects.create(user=obj_new)
 
         send_json = {  
             'code': 200, 
             'msg': '注册成功',  
-            'data': {},   
+            'data': None,   
             }
         return JsonResponse(data=send_json, status=200)
         
@@ -201,7 +205,7 @@ def banned_user(request):
             send_json = {  
                 'code': 401, 
                 'msg': '用户身份验证失败, 密码错误',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=401)
 
@@ -213,7 +217,7 @@ def banned_user(request):
         send_json = {  
             'code': 200, 
             'msg': '用户已删除',  
-            'data': {},   
+            'data': None,   
             }
         
         return JsonResponse(data=send_json, status=200)
@@ -259,7 +263,7 @@ def change_password_send_sms(request):
             send_json = {  
                 'code': 404, 
                 'msg': '用户不存在, 请输入正确的手机号',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=404)
 
@@ -270,7 +274,7 @@ def change_password_send_sms(request):
             send_json = {  
                 'code': 429, 
                 'msg': '发送频率过快',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=429)
         
@@ -285,7 +289,7 @@ def change_password_send_sms(request):
         send_json = {  
             'code': 200, 
             'msg': '验证码发送成功',  
-            'data': {},   
+            'data': None,   
             }
         
         return JsonResponse(data=send_json, status=200)
@@ -306,7 +310,7 @@ def change_password(request):
             send_json = {  
                 'code': 400, 
                 'msg': '数据格式错误',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=400) 
  
@@ -333,7 +337,7 @@ def change_password(request):
         data_json = {
             'code': 200,
             'msg': '修改密码成功',
-            'data': {},
+            'data': None,
             }
         return JsonResponse(data=data_json, status=200)
 
@@ -365,7 +369,7 @@ def plant_recognition(request):
             send_json = {  
                 'code': 400, 
                 'msg': 'json格式错误',  
-                'data': {},   
+                'data': None,   
             }
             return JsonResponse(data=send_json, status=400)
 
@@ -376,23 +380,136 @@ def plant_recognition(request):
         send_json = {  
             'code': 200, 
             'msg': '植物识别成功',  
-            'data': {}
+            'data': None
         }
         return JsonResponse(data=send_json, status=200)
 
 
 
+def user_home(request) :
+    if request.method == 'GET':
+        # 接收前端数据
+        user_id = request.user_id  # 这里需要从token中获取用户id
+        
+        # 获取用户信息
+        user_info = UserInfo.objects.filter(id=user_id).first()
+
+        user_image_info = UserImageInfo.objects.filter(user=user_info).first()
+        if user_image_info.background == None and user_image_info.image_data == None:
+            data_json = {
+                'code': 200,
+                'msg': '用户信息获取成功',
+                'data': {
+                    'user_name': user_info.username,
+                    'user_image': None,
+                    'user_background': None,
+                    }
+                }
+            return JsonResponse(data=data_json, status=200)
+
+        if  user_image_info.background != None and user_image_info.image_data == None:
+            data_json = c
+            return JsonResponse(data=data_json, status=200)
+
+        if  user_image_info.background == None and user_image_info.image_data != None:
+            data_json = {
+                'code': 200,
+                'msg': '用户信息获取成功',
+                'data': {
+                    'user_name': user_info.username,
+                    'user_image': base64.b64encode(user_image_info.image_data).decode('utf-8'),
+                    'user_background': None,
+                    }
+                }
+            return JsonResponse(data=data_json, status=200)
+
+        if  user_image_info.background != None and user_image_info.image_data != None:
+            data_json = {
+                'code': 200,    
+                'msg': '用户信息获取成功',    
+                'data': {
+                    'user_name': user_info.username,
+                    'user_image': base64.b64encode(user_image_info.image_data).decode('utf-8'),
+                    'user_background': base64.b64encode(user_image_info.background).decode('utf-8'),
+                    }
+                }
+            return JsonResponse(data=data_json, status=200)
 
 
+        
+def edit_background(request):
+    if request.method == 'POST':
+        # 接收前端数据
+        data = json.loads(request.body)
+        user_background = data.get('user_background')
+        user_id = request.user_id  # 这里需要从token中获取用户id
 
+        # 获取用户信息
+        user_info = UserInfo.objects.filter(id=user_id).first()
+
+        if 'base64,' in user_background:
+            user_background = user_background.split(',')[1]
+
+        user_background_bytes = base64.b64decode(user_background)  
+
+        # 保存用户背景图片
+        UserImageInfo.objects.filter(user=user_info).update(background=user_background_bytes)
+
+        data_json = {
+            'code': 200,
+            'msg': '用户背景修改成功',
+            'data': None,
+            }
+        return JsonResponse(data=data_json, status=200)
+        
+
+def edit_profile_image(request):
+    if request.method == 'POST':
+        # 接收前端数据
+        data = json.loads(request.body)
+        user_image = data.get('user_image')
+        user_id = request.user_id  # 这里需要从token中获取用户id
+
+        # 获取用户信息
+        user_info = UserInfo.objects.filter(id=user_id).first()
+
+        if 'base64,' in user_image:
+            user_image = user_image.split(',')[1]
+
+        user_image_bytes = base64.b64decode(user_image)  
+
+        # 保存用户头像图片
+        UserImageInfo.objects.filter(user=user_info).update(image_data=user_image_bytes)
+
+        data_json = {
+            'code': 200,
+            'msg': '用户头像修改成功',
+            'data': None,
+            }
+        return JsonResponse(data=data_json, status=200)
             
 
+def edit_nickname(request):
+    if request.method == 'POST':
+        # 接收前端数据
+        data = json.loads(request.body)
+        user_nickname = data.get('user_nickname')
+        user_id = request.user_id  # 这里需要从token中获取用户id
 
+        if len(username) < 5 or len(username) > 10:
+            data_json = {
+                'code': 400,
+                'msg': '昵称长度必须在5-10个字符之间',
+                'data': None,
+                }
+            return JsonResponse(data=data_json, status=400)
         
-        
-        
+        # 获取用户信息
+        UserInfo.objects.filter(id=user_id).update(username=user_nickname)
 
-        
-
-            
-        
+        data_json = {
+            'code': 200,
+            'msg': '用户昵称修改成功',
+            'data': None,
+            }
+        return JsonResponse(data=data_json, status=200)

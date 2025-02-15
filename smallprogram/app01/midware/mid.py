@@ -18,7 +18,8 @@ class JWTAuthMiddleware(MiddlewareMixin):
         if not auth_header.startswith('Bearer '):
             data_json = {
                 'code': 401,
-                'msg': '未提供 Token'
+                'msg': '未提供 Token',
+                'data': None,
             }
 
             return JsonResponse(data_json, status=401)
@@ -30,7 +31,8 @@ class JWTAuthMiddleware(MiddlewareMixin):
         if not payload:
             data_json = {
                 'code': 401,
-                'msg': 'Token 无效或已过期'
+                'msg': 'Token 无效或已过期',
+                'data': None,
             }
             return JsonResponse(data_json, status=401)
         
@@ -40,8 +42,9 @@ class JWTAuthMiddleware(MiddlewareMixin):
         if not exist:
             data_json = {
                 'code': 401,
-                'msg': '用户不存在'
-                }
+                'msg': '用户不存在',
+                'data': None,
+            }
             return JsonResponse(data_json, status=401)
         
         # 验证 token 是否在黑名单中
@@ -49,7 +52,8 @@ class JWTAuthMiddleware(MiddlewareMixin):
         if  blacklisted:
             data_json = {
                 'code': 401,
-                'msg': 'Token 已失效, 无法使用'
+                'msg': 'Token 已失效, 无法使用',
+                'data': None,
             }
             return JsonResponse(data_json, status=401)
         

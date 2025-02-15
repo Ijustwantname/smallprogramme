@@ -94,14 +94,15 @@ class UserRegisterModelForm(forms.ModelForm):
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
 
+        pattern = r'^1[3-9]\d{9}$'
+        if not re.fullmatch(pattern, phone):
+            raise forms.ValidationError('手机号码格式错误')
+
         ret: bool = UserInfo.objects.filter(phone=phone).exists()
         if ret:
             raise forms.ValidationError('手机号码已被注册')
 
-        pattern = r'^1[3-9]\d{9}$'
-        if not re.fullmatch(pattern, phone):
-            raise forms.ValidationError('手机号码格式错误')
-        
+
         return phone
     
 
