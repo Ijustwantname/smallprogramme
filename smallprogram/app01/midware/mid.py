@@ -9,7 +9,7 @@ class JWTAuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
 
         # 判断是否需要中间件拦截
-        if request.path in ['/api/login/', '/api/register/', '/api/register/send_sms/']:
+        if request.path in ['/api/login/', '/api/register/', '/api/register/send_sms/', '/api/change_password/', '/api/change_password/send_sms/'] :
             return None
         
         

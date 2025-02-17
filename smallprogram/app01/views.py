@@ -53,7 +53,7 @@ def login(request):
             error_dirt = {field: error[0] for field, error in model.errors.items()}
             send_json = {  
                 'code': 422, 
-                'msg': 'form error',
+                'msg': '提交到数据错误',
                 'data': error_dirt,
             }
             return JsonResponse(data=send_json, status=422)

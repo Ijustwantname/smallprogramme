@@ -23,9 +23,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-r7!4m!ohmfxj(066i#k*-8g_u%d@%1ggi*evtklph!%c#pmbc2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+
+STATIC_ROOT = '/home/li/Python/src/Django/smallprogram_static/static'
 
 
 # Application definition
