@@ -21,6 +21,10 @@ from app01 import views
 urlpatterns = [
     path('api/login/', views.login),
 
+    path('api/user_change/', views.user_change_page),
+    path('api/user_change/change_password/send_sms/', views.login_change_password_send_sms),
+    path('api/user_change/change_password/', views.login_change_password),
+
     path('api/register/', views.register),
     path('api/register/send_sms/', views.send_register_sms),
 
@@ -32,7 +36,14 @@ urlpatterns = [
 
     path('api/home/user_home/', views.user_home),
 
-    path('api/edit/background/', views.edit_background),
     path('api/edit/profile/', views.edit_profile_image),
     path('api/edit/nickname/', views.edit_nickname),
+
+    path('api/request/info_exist/', views.request_info_exist),
+
+    path('api/core_function/get_picture/', views.core_function_get_picture),
+    path('api/core_function/get_history_picture/', views.core_function_get_history_picture),
+    path('api/core_function/get_history_message/', views.core_function_get_history_message),
+    path('api/core_function/multi_conversaion/', views.core_function_multi_conversaion),
+
 ]

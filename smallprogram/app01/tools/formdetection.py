@@ -131,7 +131,6 @@ class UserRegisterModelForm(forms.ModelForm):
         
         cache_send_sms = cache.get(f'sms_code_{self.cleaned_data.get("phone")}')
 
-
         if not cache_send_sms:
             raise forms.ValidationError('验证码过期')
         
@@ -159,9 +158,6 @@ class UserSendSmsModelForm(forms.ModelForm):
 
 
 
-
-
-
 class UserLoginModelForm(forms.ModelForm):
 
     class Meta:
@@ -184,6 +180,56 @@ class UserLoginModelForm(forms.ModelForm):
             raise forms.ValidationError('格式错误, 密码必须包含至少一个数字、一个小写字母、一个大写字母和一个特殊符号(如!@#$%^&*等)且长度为8-12位。')
 
         return encrypt_password(password)
+
+
+
+
+
+class UserLoginChangePasswordModelForm(forms.ModelForm):
+    confirm_password = forms.CharField(label='确认密码')
+    send_sms = forms.CharField(label='发送短信验证码')
+    class Meta:
+        model = UserInfo
+        fields = ['phone', 'send_sms', 'password', 'confirm_password']
+    
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        pattern = r'^1[3-9]\d{9}$'
+        if not re.fullmatch(pattern, phone):
+            raise forms.ValidationError('手机号码格式错误')
+
+        return phone
+    
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        pattern = r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?/~`-]).{8,12}$'
+        if not re.fullmatch(pattern, password):
+            raise forms.ValidationError('格式错误, 密码必须包含至少一个数字、一个小写字母、一个大写字母和一个特殊符号(如!@#$%^&*等)且长度为8-12位。')
+        return encrypt_password(password)
+
+    def clean_confirm_password(self):
+        password = self.cleaned_data.get('password')
+        confirm_password = self.cleaned_data.get('confirm_password')
+        confirm_password = encrypt_password(confirm_password)
+
+        if password != confirm_password:
+            raise forms.ValidationError('两次输入的密码不一致')
+        
+        return confirm_password
+    
+    
+    def clean_send_sms(self):
+        send_sms = self.cleaned_data.get('send_sms')
+        cache_send_sms = cache.get(f'sms_code_login_change_password_{self.cleaned_data.get("phone")}')
+
+        if not cache_send_sms:
+            raise forms.ValidationError('验证码过期')
+        
+        if send_sms != cache_send_sms:
+            raise forms.ValidationError('验证码错误')
+
+        return send_sms
+        
 
 
         

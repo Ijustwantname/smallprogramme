@@ -27,15 +27,13 @@ def send_sms(phone, code):
         phone_numbers=phone,
         template_param='{"code":"' + code + '"}'
     )
-
+    
     runtime = util_models.RuntimeOptions()
     try:
         # 复制代码运行请自行打印 API 的返回值
         response = client.send_sms_with_options(send_sms_request, runtime)
-        print('短信发送成功, 结果是:',response.body)
     except Exception as error:
         # 如有需要，请打印 error
         UtilClient.assert_as_string(error.message)
-        print("短信发送失败", error.message)
     return send_sms_request
 

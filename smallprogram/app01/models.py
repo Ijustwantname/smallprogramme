@@ -12,7 +12,6 @@ class UserInfo(models.Model):
 
 class UserImageInfo(models.Model):
     image_data = models.BinaryField(null=True, blank=True)
-    background = models.BinaryField(null=True, blank=True)
     user = models.ForeignKey(to='UserInfo', to_field='id',on_delete=models.CASCADE)
     
     
@@ -23,10 +22,20 @@ class Blacklist(models.Model):
 
 
 
-class ChatSessionMessage(models.Model):
-    session_id = models.UUIDField()
-    message = models.TextField()
-    role = models.CharField(max_length=16)
-    create_time = models.DateTimeField(auto_now_add=True)
-    type_message = models.CharField(max_length=16, default='text')
-    
+class UserAiImage(models.Model):
+    image_data = models.BinaryField()
+    uuid = models.UUIDField(editable=False)
+    user = models.ForeignKey(to='UserInfo', to_field='id',on_delete=models.CASCADE)
+    add_time = models.DateTimeField(auto_now_add=True)
+    image_info = models.CharField(max_length=255, null=True, blank=True)
+
+
+class HistoryAiMessage(models.Model):
+    uuid = models.UUIDField(editable=False)
+    user = models.ForeignKey(to='UserInfo', to_field='id',on_delete=models.CASCADE)     
+    message = models.JSONField()
+
+
+class InstructionManual(models.Model):
+    title = models.CharField(max_length=255)
+    content = models.TextField()
